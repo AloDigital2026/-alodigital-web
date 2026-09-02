@@ -1,0 +1,6 @@
+{
+  "name": "AlóDigital",
+  "description": "Plataforma de gestión de pedidos, catálogo digital e inventario para tiendas de barrio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
