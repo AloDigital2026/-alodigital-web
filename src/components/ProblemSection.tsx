@@ -17,15 +17,15 @@ const PROBLEMS: ProblemItem[] = [
     icon: '📄',
     title: 'Pedidos enredados',
     description: 'Recibir pedidos por WhatsApp, llamadas y mostrador sin unificar consume más tiempo tratando de controlar tanta información y revisar qué se gastó.',
-    antes: 'Revisar chats uno por uno mientras atiende el mostrador, y olvidar responder a alguien.',
+    antes: 'Un cliente le escribe por WhatsApp mientras atiende a otro en el mostrador, y a los cinco minutos ya no se acuerda de ninguno de los dos.',
     despues: 'Los pedidos de WhatsApp entran organizados solos. Los que le llegan por teléfono o en el mostrador, los anota en su cuaderno de siempre — solo le toma una foto y quedan organizados igual.',
   },
   {
     id: 'fiados',
     icon: '💵',
     title: 'Fiados que se olvidan',
-    description: 'Cuentas mentales o en cuadernos sueltos que terminan en dinero perdido a fin de mes.',
-    antes: 'Cuentas anotadas que al final son más trabajo para organizar, fiados en tiempo real.',
+    description: 'Anotar fiados en papelitos, en la memoria o en el cuaderno — y a fin de mes ya no saber quién le debe ni cuánto.',
+    antes: 'Fiados anotados en cualquier parte. A fin de mes, ni usted mismo sabe cuánto le deben.',
     despues: 'Cada fiado queda registrado en su tablero. Usted solo marca cuando se lo pagan.',
   },
   {
@@ -33,16 +33,16 @@ const PROBLEMS: ProblemItem[] = [
     icon: '📦',
     title: 'Inventario a ciegas',
     description: 'No saber qué se le está acabando hasta que el cliente lo pide y ya no hay.',
-    antes: 'Sin saber qué se está acabando y qué hay me toma más tiempo tener control de inventario.',
-    despues: 'Alerta automática cuando un producto está por acabarse, para reabastecer a tiempo.',
+    antes: "El cliente le pide algo, usted dice 'sí, hay', y cuando va a buscarlo ya se acabó. O peor: se acabó hace días y usted no lo sabía.",
+    despues: 'Le avisa solo cuando un producto está por acabarse — sin que usted tenga que revisar estante por estante.',
   },
   {
     id: 'tiempo',
     icon: '⏳',
     title: 'Tiempo perdido',
     description: 'Pasar horas al final del día organizando datos y cuadrando la caja.',
-    antes: 'Pasar horas al final del día organizando datos y cuadrando la caja.',
-    despues: 'Su caja del día ya calculada, lista para revisar en un solo vistazo. Sistema compatible con otros sistemas o con POS.',
+    antes: 'Terminar de atender a las 9 de la noche y todavía tener que sentarse a sumar, cuadrar y revisar todo lo del día.',
+    despues: 'Su caja del día ya calculada, lista para revisar en un solo vistazo — y compatible con el sistema que ya usa, si tiene uno.',
   },
 ];
 
@@ -135,4 +135,5 @@ export const ProblemSection: React.FC = () => {
     </section>
   );
 };
+
 
