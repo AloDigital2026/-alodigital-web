@@ -10,7 +10,7 @@ interface FaqItem {
 const FAQS: FaqItem[] = [
   {
     question: '¿Qué pasa con mis pedidos de WhatsApp y telefónicos?',
-    answer: 'Sus pedidos de WhatsApp usted los recibe como siempre, solo los copia a su Tablero de Control y ya. Sus pedidos telefónicos siguen anotados donde usted prefiera, solo toma una foto que conecta a su Tablero de Control y listo. ¿Ve lo sencillo y la necesidad de invitar a los vecinos a usar su Catálogo Inteligente en línea?',
+    answer: 'Nada cambia en cómo los recibe: sus clientes le siguen escribiendo y llamando igual que siempre. Lo único distinto es que ahora, con un par de toques, esos pedidos quedan organizados solos en su Tablero — sin cuadernos sueltos, sin chats perdidos, sin tener que acordarse de nada al final del día.',
   },
   {
     question: '¿Necesito comprar un computador costoso o funciona en mi celular?',
@@ -18,15 +18,15 @@ const FAQS: FaqItem[] = [
   },
   {
     question: '¿Quién se encarga de subir mis productos y precios?',
-    answer: 'Para todo lo que es actualización de inventario y precios usted es el único que tiene acceso a esos cambios directamente desde su Tablero de Control.',
+    answer: 'Nosotros dejamos todo cargado y configurado desde el primer día: sus productos, sus precios, su catálogo. De ahí en adelante, usted tiene el control — cuando cambia un precio o llega mercancía nueva, lo actualiza desde su Tablero en menos de un minuto. Y si algún día prefiere que lo hagamos nosotros, puede modificar el plan que elija.',
   },
   {
     question: '¿Cómo me ayuda el Perfil de Google Maps?',
-    answer: 'Conecta su tienda directamente con las búsquedas locales de su barrio, facilitando que más vecinos encuentren su ubicación y su catálogo digital al instante.',
+    answer: 'Cuando un vecino busca en Google "tienda cerca de mí" o el nombre de su negocio, su tienda aparece con foto, dirección, horario y el enlace a su catálogo. Es visibilidad gratis en el lugar donde la gente ya está buscando — sin pagar publicidad, sin hacer nada extra.',
   },
   {
     question: '¿Y si no sé mucho de tecnología?',
-    answer: 'El sistema está diseñado específicamente para tenderos, sin complicaciones ni enredos. Si sabe usar WhatsApp, sabe usar esto.',
+    answer: 'El sistema está diseñado específicamente para tenderos, sin complicaciones ni enredos. Si sabe usar WhatsApp, sabe usar esto. Y si alguna vez se traba, nosotros estamos del otro lado para resolverlo — usted no tiene que entenderse con la tecnología, para eso está la mensualidad.',
   },
 ];
 
