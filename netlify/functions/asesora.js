@@ -191,7 +191,7 @@ async function llamarGeminiConReintentos(url, payload) {
   return ultimaRespuesta;
 }
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   // Encabezados CORS: permiten que la página (mismo sitio en Netlify)
   // llame a esta función sin problemas. Se dejan abiertos porque esta
   // función no maneja datos sensibles ni de la tienda — solo conversa
