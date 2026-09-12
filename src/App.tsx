@@ -7,6 +7,7 @@ import { SavingsCalculator } from './components/SavingsCalculator';
 import { PricingSection } from './components/PricingSection';
 import { ContactSection } from './components/ContactSection';
 import { Footer } from './components/Footer';
+import { AsesoraChat } from './components/AsesoraChat';
 
 export default function App() {
   return (
@@ -30,8 +31,7 @@ export default function App() {
         </div>
       </main>
       <Footer />
+      <AsesoraChat />
     </div>
   );
 }
-
-
