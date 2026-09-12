@@ -115,3 +115,201 @@ Nunca inventas datos, precios, fechas, ni condiciones.
 CÓMO MANEJAS OBJECIONES COMUNES:
 - "Es caro." → "Entiendo. Mire: si hoy usted dedica 2 horas al día a
   organizar pedidos y cuentas, son 60 horas al mes. AlóDigital le
+  devuelve ese tiempo. ¿Cuánto vale su tiempo?"
+- "No tengo tiempo para aprender cosas nuevas." → "Justo por eso
+  AlóDigital está hecho así. No le enseña nada nuevo: usted sigue usando
+  WhatsApp como siempre, y AlóDigital organiza por detrás. Si sabe usar
+  WhatsApp, ya sabe usar esto."
+- "Yo no uso tecnología." → "No necesita usar tecnología. Solo necesita
+  su celular, el mismo que ya usa. Nosotros dejamos todo funcionando.
+  Usted solo mira el tablero al final del día."
+- "Déjeme pensarlo." → "Con mucho gusto. Le dejo mi WhatsApp para que me
+  escriba cuando quiera, sin compromiso. Y si quiere, le muestro cómo se
+  vería en su tienda, sin costo."
+- "¿Y si no funciona?" → "Por eso el mantenimiento incluye soporte. Si
+  algo falla, nosotros lo resolvemos. Usted no tiene que entenderse con
+  la tecnología."
+
+CÓMO CIERRAS, cuando el visitante muestra interés real:
+"Si quiere que le muestre cómo se vería en su tienda, escríbame por
+WhatsApp al 316 753 9440. Sin compromiso. Y si prefiere, siga mirando la
+página con calma. Gracias por su tiempo."
+Nunca presionas. Nunca insistes. Siempre dejas la puerta abierta.
+
+REGLAS DE ORO:
+1. Nunca inventas. Si no sabes algo, lo dices.
+2. Nunca presionas. El visitante decide cuándo y cómo.
+3. Nunca usas tecnicismos. Hablas como le hablarías a un vecino.
+4. Siempre hablas de usted.
+5. Siempre cierras con el WhatsApp o con la invitación a seguir mirando.
+6. Si el visitante se enoja o se frustra, mantienes la calma, le
+   agradeces, y le dejas la puerta abierta.
+7. Si el visitante pregunta algo que no tiene que ver con AlóDigital,
+   respondes con calma: "Eso no lo manejo, pero si tiene alguna pregunta
+   sobre AlóDigital, con gusto le ayudo."
+
+FORMATO DE RESPUESTA:
+- Respuestas cortas: máximo 2-3 frases por turno. El visitante no quiere
+  leer párrafos largos.
+- Una idea por respuesta. Si algo necesita explicación larga, se divide
+  en varias respuestas cortas, esperando a que el visitante siga
+  preguntando.
+
+Responde ÚNICAMENTE con un JSON, sin markdown, con esta forma exacta:
+{"respuesta": "lo que le dices al visitante, en 2-3 frases como máximo"}
+`;
+
+// Reintentos automáticos si Gemini responde ocupado (503) o con límite
+// excedido (429) — igual que en el Apps Script de Don Arturo, para que
+// un momento de saturación del modelo no tumbe la respuesta.
+async function llamarGeminiConReintentos(url, payload) {
+  const maxIntentos = 3;
+  let esperaMs = 2000;
+  let ultimaRespuesta = null;
+
+  for (let intento = 1; intento <= maxIntentos; intento++) {
+    ultimaRespuesta = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (ultimaRespuesta.status === 200) {
+      return ultimaRespuesta;
+    }
+
+    if (ultimaRespuesta.status === 503 || ultimaRespuesta.status === 429) {
+      if (intento < maxIntentos) {
+        await new Promise((resolve) => setTimeout(resolve, esperaMs));
+        esperaMs *= 2;
+        continue;
+      }
+    }
+    break;
+  }
+
+  return ultimaRespuesta;
+}
+
+exports.handler = async (event) => {
+  // Encabezados CORS: permiten que la página (mismo sitio en Netlify)
+  // llame a esta función sin problemas. Se dejan abiertos porque esta
+  // función no maneja datos sensibles ni de la tienda — solo conversa
+  // sobre AlóDigital en general.
+  const headersCORS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers: headersCORS, body: '' };
+  }
+
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers: headersCORS,
+      body: JSON.stringify({ status: 'error', message: 'Método no permitido' }),
+    };
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return {
+      statusCode: 500,
+      headers: headersCORS,
+      body: JSON.stringify({
+        status: 'error',
+        message: 'Falta configurar GEMINI_API_KEY en las variables de entorno de Netlify',
+      }),
+    };
+  }
+
+  let datosRecibidos;
+  try {
+    datosRecibidos = JSON.parse(event.body || '{}');
+  } catch (e) {
+    return {
+      statusCode: 400,
+      headers: headersCORS,
+      body: JSON.stringify({ status: 'error', message: 'Cuerpo de la petición inválido' }),
+    };
+  }
+
+  const mensajeVisitante = String(datosRecibidos.mensaje || '').trim();
+  const historial = Array.isArray(datosRecibidos.historial) ? datosRecibidos.historial : [];
+
+  if (!mensajeVisitante) {
+    return {
+      statusCode: 400,
+      headers: headersCORS,
+      body: JSON.stringify({ status: 'error', message: 'Falta el mensaje del visitante' }),
+    };
+  }
+
+  // Arma el contexto de la conversación (igual que hace Arturo con su historial)
+  const contexto = historial
+    .map((h) => (h.role === 'visitante' ? 'Visitante: ' : 'Asesora: ') + h.text)
+    .join('\n');
+
+  const promptCompleto =
+    PROMPT_ASESORA +
+    '\n\nConversación hasta ahora:\n' +
+    contexto +
+    '\nVisitante: ' + mensajeVisitante;
+
+  const url =
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=' +
+    apiKey;
+
+  const payload = {
+    contents: [{ parts: [{ text: promptCompleto }] }],
+  };
+
+  try {
+    const respuestaGemini = await llamarGeminiConReintentos(url, payload);
+
+    if (!respuestaGemini || respuestaGemini.status !== 200) {
+      return {
+        statusCode: 200,
+        headers: headersCORS,
+        body: JSON.stringify({
+          status: 'success',
+          respuesta:
+            'Disculpe, en este momento no puedo responder. ¿Le parece si me escribe directamente por WhatsApp al 316 753 9440?',
+        }),
+      };
+    }
+
+    const json = await respuestaGemini.json();
+    let textoRespuesta = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    textoRespuesta = textoRespuesta.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+    let datosFinales;
+    try {
+      datosFinales = JSON.parse(textoRespuesta);
+    } catch (e) {
+      datosFinales = { respuesta: textoRespuesta || 'Con gusto le ayudo. ¿Qué le gustaría saber sobre AlóDigital?' };
+    }
+
+    return {
+      statusCode: 200,
+      headers: headersCORS,
+      body: JSON.stringify({
+        status: 'success',
+        respuesta: datosFinales.respuesta,
+      }),
+    };
+  } catch (error) {
+    return {
+      statusCode: 200,
+      headers: headersCORS,
+      body: JSON.stringify({
+        status: 'success',
+        respuesta:
+          'Disculpe, tuve un problema para responder. ¿Le parece si me escribe directamente por WhatsApp al 316 753 9440?',
+      }),
+    };
+  }
+};
