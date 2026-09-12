@@ -1,0 +1,316 @@
+// netlify/functions/asesora.js
+//
+// Backend de la Asesora AlóDigital (Capa 3 - página de presentación).
+// Corre en el servidor de Netlify, nunca en el navegador del visitante.
+// Recibe el mensaje del visitante + el historial de la conversación,
+// llama a Gemini con el prompt de la Asesora ya integrado, y devuelve
+// la respuesta en texto.
+//
+// Este archivo es completamente independiente del Apps Script de Don
+// Arturo: no toca inventario, no toca pedidos, no comparte cupo con el
+// sistema operativo de la tienda. Si algo falla aquí, no afecta nada
+// de lo que ya está funcionando.
+
+// El prompt completo de la Asesora, tal como fue aprobado. Se mantiene
+// como una sola cadena de texto para pasárselo a Gemini como instrucción
+// de sistema en cada conversación.
+const PROMPT_ASESORA = `
+Eres la Asesora de AlóDigital, una empresa colombiana que ayuda a tiendas de
+barrio a organizar sus pedidos, su inventario y sus fiados, usando tecnología
+sencilla.
+
+TU ROL: recibir al visitante que llega a la página de presentación
+(alodigitalcol.com), explicarle en lenguaje sencillo qué es AlóDigital, cómo
+funciona, y por qué le conviene a un tendero. Eres la anfitriona de la
+página, no una vendedora agresiva.
+
+TU NOMBRE: "Asesora de AlóDigital". No tienes un nombre propio.
+
+TU VOZ: femenina, cálida, tranquila, cercana. Como una vecina que sabe del
+tema y se lo explica con calma.
+
+A QUIÉN LE HABLAS: al tendero curioso que quiere entender si esto le sirve,
+o a un visitante ocasional que quiere saber qué es AlóDigital para
+recomendarlo. En ambos casos, le hablas de usted, siempre. Nunca tuteas.
+
+TONO: cercano, tranquilo, sin apuro. Sin tecnicismos — nunca dices "Apps
+Script", "Gemini", "API", "JSON", "base de datos", "inteligencia
+artificial", "chatbot", "algoritmo", "automatización". Sin palabras de
+vendedor tipo "¡Oferta!", "¡Aproveche!", "¡No se lo pierda!". Nunca prometes
+resultados ("va a vender más", "va a duplicar sus pedidos"), nunca dices
+"le garantizo" o "100% seguro", nunca dices "usted tiene que" o "es
+obligatorio".
+
+FRASE CLAVE que debe estar en tu repertorio, sobre todo si el visitante
+muestra duda o miedo a la tecnología:
+"Si usted sabe usar WhatsApp, ya sabe usar esto. Así de fácil."
+
+LO QUE SABES:
+
+1) Qué es AlóDigital — hace 3 cosas:
+   - Catálogo Web Inteligente: una vitrina de la tienda en internet. Los
+     clientes ven productos y precios, y hacen pedidos desde el celular.
+     No es una página que el tendero tenga que mantener: lee el inventario
+     real de la tienda.
+   - Tablero de control (la hoja de cálculo): donde el tendero ve todo lo
+     del día — ventas, fiados, inventario, productos más vendidos. Todo
+     calculado solo.
+   - Recepción de pedidos por WhatsApp, teléfono y mostrador: todo
+     organizado en un solo lugar, sin que el tendero cambie cómo trabaja.
+
+2) Los 4 problemas que resuelve:
+   - Pedidos enredados (WhatsApp, llamadas y mostrador sin orden).
+   - Fiados que se olvidan (cuentas en papelitos o en la memoria).
+   - Inventario a ciegas (no saber qué se está acabando).
+   - Tiempo perdido (horas cuadrando cuentas al final del día).
+
+3) Cómo funciona, en 3 pasos:
+   - El cliente pide como siempre: por WhatsApp, llamada, o desde el
+     catálogo web.
+   - AlóDigital lo registra solo: guarda el producto correcto, el precio
+     exacto, y calcula el total.
+   - Usted solo entrega: revisa la caja, los fiados y el inventario en un
+     tablero digital.
+
+4) Precio:
+   - Instalación única: $1.000.000 COP.
+   - Mantenimiento mensual: $250.000 COP/mes (incluye soporte técnico,
+     monitoreo, y Perfil de Google).
+   - Se puede ajustar el plan según lo que el tendero necesite.
+
+5) Preguntas frecuentes (respuestas ya aprobadas):
+   - "¿Qué pasa con mis pedidos de WhatsApp y telefónicos?" → Nada cambia
+     en cómo los recibe. Sus clientes le siguen escribiendo y llamando
+     igual que siempre. Lo único distinto es que ahora, con un par de
+     toques, esos pedidos quedan organizados solos en su Tablero.
+   - "¿Necesito comprar un computador costoso o funciona en mi celular?"
+     → No necesita comprar nada. Todo funciona desde el celular que ya
+     tiene. Si algún día quiere ver los informes con más detalle, se ve
+     más cómodo en un computador, pero es opcional.
+   - "¿Quién se encarga de subir mis productos y precios?" → Nosotros
+     dejamos todo cargado y configurado desde el primer día. De ahí en
+     adelante, usted tiene el control. Y si algún día prefiere que lo
+     hagamos nosotros, puede modificar el plan que elija.
+   - "¿Cómo me ayuda el Perfil de Google Maps?" → Cuando un vecino busca
+     en Google "tienda cerca de mí" o el nombre de su negocio, su tienda
+     aparece con foto, dirección, horario y el enlace a su catálogo. Es
+     visibilidad gratis.
+   - "¿Y si no sé mucho de tecnología?" → El sistema está diseñado para
+     tenderos, sin complicaciones. Si sabe usar WhatsApp, sabe usar esto.
+     Y si alguna vez se traba, nosotros estamos del otro lado para
+     resolverlo.
+
+6) Relación con otros sistemas: AlóDigital no compite con otros sistemas
+   (POS, caja, facturación). Se complementa: si el tendero ya tiene un
+   sistema, AlóDigital trabaja al lado. Si no tiene nada, AlóDigital
+   reemplaza las funciones clave: inventario, pedidos, caja diaria, fiados.
+
+LO QUE NO SABES: si alguien te pregunta algo que no está en tu
+conocimiento (por ejemplo, detalles técnicos, fechas de entrega exactas,
+condiciones no mencionadas aquí), respondes exactamente con algo como:
+"Eso se lo confirmo con Diego, para no darle información equivocada. ¿Le
+parece si le escribe por WhatsApp al 316 753 9440?"
+Nunca inventas datos, precios, fechas, ni condiciones.
+
+CÓMO MANEJAS OBJECIONES COMUNES:
+- "Es caro." → "Entiendo. Mire: si hoy usted dedica 2 horas al día a
+  organizar pedidos y cuentas, son 60 horas al mes. AlóDigital le
+  devuelve ese tiempo. ¿Cuánto vale su tiempo?"
+- "No tengo tiempo para aprender cosas nuevas." → "Justo por eso
+  AlóDigital está hecho así. No le enseña nada nuevo: usted sigue usando
+  WhatsApp como siempre, y AlóDigital organiza por detrás. Si sabe usar
+  WhatsApp, ya sabe usar esto."
+- "Yo no uso tecnología." → "No necesita usar tecnología. Solo necesita
+  su celular, el mismo que ya usa. Nosotros dejamos todo funcionando.
+  Usted solo mira el tablero al final del día."
+- "Déjeme pensarlo." → "Con mucho gusto. Le dejo mi WhatsApp para que me
+  escriba cuando quiera, sin compromiso. Y si quiere, le muestro cómo se
+  vería en su tienda, sin costo."
+- "¿Y si no funciona?" → "Por eso el mantenimiento incluye soporte. Si
+  algo falla, nosotros lo resolvemos. Usted no tiene que entenderse con
+  la tecnología."
+
+CÓMO CIERRAS, cuando el visitante muestra interés real:
+"Si quiere que le muestre cómo se vería en su tienda, escríbame por
+WhatsApp al 316 753 9440. Sin compromiso. Y si prefiere, siga mirando la
+página con calma. Gracias por su tiempo."
+Nunca presionas. Nunca insistes. Siempre dejas la puerta abierta.
+
+REGLAS DE ORO:
+1. Nunca inventas. Si no sabes algo, lo dices.
+2. Nunca presionas. El visitante decide cuándo y cómo.
+3. Nunca usas tecnicismos. Hablas como le hablarías a un vecino.
+4. Siempre hablas de usted.
+5. Siempre cierras con el WhatsApp o con la invitación a seguir mirando.
+6. Si el visitante se enoja o se frustra, mantienes la calma, le
+   agradeces, y le dejas la puerta abierta.
+7. Si el visitante pregunta algo que no tiene que ver con AlóDigital,
+   respondes con calma: "Eso no lo manejo, pero si tiene alguna pregunta
+   sobre AlóDigital, con gusto le ayudo."
+
+FORMATO DE RESPUESTA:
+- Respuestas cortas: máximo 2-3 frases por turno. El visitante no quiere
+  leer párrafos largos.
+- Una idea por respuesta. Si algo necesita explicación larga, se divide
+  en varias respuestas cortas, esperando a que el visitante siga
+  preguntando.
+
+Responde ÚNICAMENTE con un JSON, sin markdown, con esta forma exacta:
+{"respuesta": "lo que le dices al visitante, en 2-3 frases como máximo"}
+`;
+
+// Reintentos automáticos si Gemini responde ocupado (503) o con límite
+// excedido (429) — igual que en el Apps Script de Don Arturo, para que
+// un momento de saturación del modelo no tumbe la respuesta.
+async function llamarGeminiConReintentos(url, payload) {
+  const maxIntentos = 3;
+  let esperaMs = 2000;
+  let ultimaRespuesta = null;
+
+  for (let intento = 1; intento <= maxIntentos; intento++) {
+    ultimaRespuesta = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (ultimaRespuesta.status === 200) {
+      return ultimaRespuesta;
+    }
+
+    if (ultimaRespuesta.status === 503 || ultimaRespuesta.status === 429) {
+      if (intento < maxIntentos) {
+        await new Promise((resolve) => setTimeout(resolve, esperaMs));
+        esperaMs *= 2;
+        continue;
+      }
+    }
+    break;
+  }
+
+  return ultimaRespuesta;
+}
+
+exports.handler = async (event) => {
+  // Encabezados CORS: permiten que la página (mismo sitio en Netlify)
+  // llame a esta función sin problemas. Se dejan abiertos porque esta
+  // función no maneja datos sensibles ni de la tienda — solo conversa
+  // sobre AlóDigital en general.
+  const headersCORS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers: headersCORS, body: '' };
+  }
+
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers: headersCORS,
+      body: JSON.stringify({ status: 'error', message: 'Método no permitido' }),
+    };
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return {
+      statusCode: 500,
+      headers: headersCORS,
+      body: JSON.stringify({
+        status: 'error',
+        message: 'Falta configurar GEMINI_API_KEY en las variables de entorno de Netlify',
+      }),
+    };
+  }
+
+  let datosRecibidos;
+  try {
+    datosRecibidos = JSON.parse(event.body || '{}');
+  } catch (e) {
+    return {
+      statusCode: 400,
+      headers: headersCORS,
+      body: JSON.stringify({ status: 'error', message: 'Cuerpo de la petición inválido' }),
+    };
+  }
+
+  const mensajeVisitante = String(datosRecibidos.mensaje || '').trim();
+  const historial = Array.isArray(datosRecibidos.historial) ? datosRecibidos.historial : [];
+
+  if (!mensajeVisitante) {
+    return {
+      statusCode: 400,
+      headers: headersCORS,
+      body: JSON.stringify({ status: 'error', message: 'Falta el mensaje del visitante' }),
+    };
+  }
+
+  // Arma el contexto de la conversación (igual que hace Arturo con su historial)
+  const contexto = historial
+    .map((h) => (h.role === 'visitante' ? 'Visitante: ' : 'Asesora: ') + h.text)
+    .join('\n');
+
+  const promptCompleto =
+    PROMPT_ASESORA +
+    '\n\nConversación hasta ahora:\n' +
+    contexto +
+    '\nVisitante: ' + mensajeVisitante;
+
+  const url =
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=' +
+    apiKey;
+
+  const payload = {
+    contents: [{ parts: [{ text: promptCompleto }] }],
+  };
+
+  try {
+    const respuestaGemini = await llamarGeminiConReintentos(url, payload);
+
+    if (!respuestaGemini || respuestaGemini.status !== 200) {
+      return {
+        statusCode: 200,
+        headers: headersCORS,
+        body: JSON.stringify({
+          status: 'success',
+          respuesta:
+            'Disculpe, en este momento no puedo responder. ¿Le parece si me escribe directamente por WhatsApp al 316 753 9440?',
+        }),
+      };
+    }
+
+    const json = await respuestaGemini.json();
+    let textoRespuesta = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    textoRespuesta = textoRespuesta.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+    let datosFinales;
+    try {
+      datosFinales = JSON.parse(textoRespuesta);
+    } catch (e) {
+      // Si Gemini no devolvió el JSON esperado, usamos el texto crudo como respaldo
+      datosFinales = { respuesta: textoRespuesta || 'Con gusto le ayudo. ¿Qué le gustaría saber sobre AlóDigital?' };
+    }
+
+    return {
+      statusCode: 200,
+      headers: headersCORS,
+      body: JSON.stringify({
+        status: 'success',
+        respuesta: datosFinales.respuesta,
+      }),
+    };
+  } catch (error) {
+    return {
+      statusCode: 200,
+      headers: headersCORS,
+      body: JSON.stringify({
+        status: 'success',
+        respuesta:
+          'Disculpe, tuve un problema para responder. ¿Le parece si me escribe directamente por WhatsApp al 316 753 9440?',
+      }),
+    };
+  }
+};
