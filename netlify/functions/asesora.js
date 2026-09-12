@@ -206,7 +206,12 @@ exports.handler = async (event) => {
     return { statusCode: 200, headers: headersCORS, body: '' };
   }
 
-  if (event.httpMethod !== 'POST') {
+  // GET solo existe para poder probar la función escribiendo una URL directo
+  // en el navegador (sin necesidad de la Consola). El uso real desde la
+  // página (cuando construyamos el chat) siempre será por POST.
+  const esPruebaPorNavegador = event.httpMethod === 'GET';
+
+  if (event.httpMethod !== 'POST' && !esPruebaPorNavegador) {
     return {
       statusCode: 405,
       headers: headersCORS,
@@ -226,19 +231,25 @@ exports.handler = async (event) => {
     };
   }
 
-  let datosRecibidos;
-  try {
-    datosRecibidos = JSON.parse(event.body || '{}');
-  } catch (e) {
-    return {
-      statusCode: 400,
-      headers: headersCORS,
-      body: JSON.stringify({ status: 'error', message: 'Cuerpo de la petición inválido' }),
-    };
-  }
+  let mensajeVisitante = '';
+  let historial = [];
 
-  const mensajeVisitante = String(datosRecibidos.mensaje || '').trim();
-  const historial = Array.isArray(datosRecibidos.historial) ? datosRecibidos.historial : [];
+  if (esPruebaPorNavegador) {
+    mensajeVisitante = String((event.queryStringParameters || {}).mensaje || '').trim();
+  } else {
+    let datosRecibidos;
+    try {
+      datosRecibidos = JSON.parse(event.body || '{}');
+    } catch (e) {
+      return {
+        statusCode: 400,
+        headers: headersCORS,
+        body: JSON.stringify({ status: 'error', message: 'Cuerpo de la petición inválido' }),
+      };
+    }
+    mensajeVisitante = String(datosRecibidos.mensaje || '').trim();
+    historial = Array.isArray(datosRecibidos.historial) ? datosRecibidos.historial : [];
+  }
 
   if (!mensajeVisitante) {
     return {
