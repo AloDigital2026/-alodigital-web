@@ -78,7 +78,7 @@ export const AsesoraChat: React.FC = () => {
       <button
         type="button"
         onClick={() => setAbierto((prev) => !prev)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3.5 rounded-full bg-[#30D158] text-black font-bold text-sm shadow-[0_10px_30px_rgba(48,209,88,0.35)] hover:bg-[#34E05F] transition-all"
+        className="fixed bottom-24 right-6 z-50 flex items-center gap-2 px-5 py-3.5 rounded-full bg-[#30D158] text-black font-bold text-sm shadow-[0_10px_30px_rgba(48,209,88,0.35)] hover:bg-[#34E05F] transition-all"
         aria-label="Hablar con la Asesora de AlóDigital"
       >
         {abierto ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
@@ -87,7 +87,7 @@ export const AsesoraChat: React.FC = () => {
 
       {/* Ventana de chat */}
       {abierto && (
-        <div className="fixed bottom-24 right-6 z-50 w-[92vw] max-w-sm h-[70vh] max-h-[520px] bg-[#111111] border border-white/10 rounded-3xl shadow-2xl shadow-black/80 flex flex-col overflow-hidden">
+        <div className="fixed bottom-44 right-6 z-50 w-[92vw] max-w-sm h-[65vh] max-h-[480px] bg-[#111111] border-2 border-[#00FF66] shadow-[0_0_35px_rgba(0,255,102,0.25)] rounded-3xl flex flex-col overflow-hidden">
           {/* Encabezado */}
           <div className="px-5 py-4 border-b border-white/10 bg-black/40 flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-[#30D158]/20 flex items-center justify-center text-lg">
