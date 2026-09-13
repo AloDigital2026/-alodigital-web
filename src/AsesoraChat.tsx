@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send } from 'lucide-react';
+import { AsesoraVoz } from './AsesoraVoz';
 
 interface MensajeChat {
   role: 'visitante' | 'asesora';
@@ -11,6 +12,7 @@ const MENSAJE_BIENVENIDA =
 
 export const AsesoraChat: React.FC = () => {
   const [abierto, setAbierto] = useState(false);
+  const [vozAbierta, setVozAbierta] = useState(false);
   const [mensajes, setMensajes] = useState<MensajeChat[]>([
     { role: 'asesora', text: MENSAJE_BIENVENIDA },
   ]);
@@ -74,7 +76,17 @@ export const AsesoraChat: React.FC = () => {
 
   return (
     <>
-      {/* Botón flotante */}
+      {/* Botón de voz (flota un poco más arriba que el botón de chat) */}
+      <button
+        type="button"
+        onClick={() => setVozAbierta(true)}
+        className="fixed bottom-24 right-6 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-[#111111] border border-[#30D158]/40 text-[#30D158] shadow-lg hover:bg-[#1a1a1a] transition-all"
+        aria-label="Hablar con la Asesora por voz"
+      >
+        🎙️
+      </button>
+
+      {/* Botón flotante de texto (igual que antes) */}
       <button
         type="button"
         onClick={() => setAbierto((prev) => !prev)}
@@ -85,7 +97,7 @@ export const AsesoraChat: React.FC = () => {
         <span>{abierto ? 'Cerrar' : 'Hable con la Asesora'}</span>
       </button>
 
-      {/* Ventana de chat */}
+      {/* Ventana de chat (igual que antes) */}
       {abierto && (
         <div className="fixed bottom-24 right-6 z-50 w-[92vw] max-w-sm h-[70vh] max-h-[520px] bg-[#111111] border border-white/10 rounded-3xl shadow-2xl shadow-black/80 flex flex-col overflow-hidden">
           {/* Encabezado */}
@@ -152,6 +164,9 @@ export const AsesoraChat: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Ventana de voz (nueva, completamente separada de la lógica de arriba) */}
+      {vozAbierta && <AsesoraVoz onCerrar={() => setVozAbierta(false)} />}
     </>
   );
 };
