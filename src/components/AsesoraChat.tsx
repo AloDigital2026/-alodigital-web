@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send } from 'lucide-react';
+import { AsesoraVoz } from './AsesoraVoz';
 
 interface MensajeChat {
   role: 'visitante' | 'asesora';
@@ -11,6 +12,7 @@ const MENSAJE_BIENVENIDA =
 
 export const AsesoraChat: React.FC = () => {
   const [abierto, setAbierto] = useState(false);
+  const [vozAbierta, setVozAbierta] = useState(false);
   const [mensajes, setMensajes] = useState<MensajeChat[]>([
     { role: 'asesora', text: MENSAJE_BIENVENIDA },
   ]);
@@ -40,8 +42,6 @@ export const AsesoraChat: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mensaje: texto,
-          // No incluye el mensaje de bienvenida fijo en el historial que se envía,
-          // ya que ese saludo no vino de una respuesta real de la Asesora.
           historial: historialActual.filter((m) => m.text !== MENSAJE_BIENVENIDA),
         }),
       });
@@ -74,21 +74,27 @@ export const AsesoraChat: React.FC = () => {
 
   return (
     <>
-      {/* Botón flotante */}
+      <button
+        type="button"
+        onClick={() => setVozAbierta(true)}
+        className="fixed bottom-24 right-6 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-[#111111] border border-[#30D158]/40 text-[#30D158] shadow-lg hover:bg-[#1a1a1a] transition-all"
+        aria-label="Hablar con la Asesora por voz"
+      >
+        🎙️
+      </button>
+
       <button
         type="button"
         onClick={() => setAbierto((prev) => !prev)}
-        className="fixed bottom-24 right-6 z-50 flex items-center gap-2 px-5 py-3.5 rounded-full bg-[#30D158] text-black font-bold text-sm shadow-[0_10px_30px_rgba(48,209,88,0.35)] hover:bg-[#34E05F] transition-all"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3.5 rounded-full bg-[#30D158] text-black font-bold text-sm shadow-[0_10px_30px_rgba(48,209,88,0.35)] hover:bg-[#34E05F] transition-all"
         aria-label="Hablar con la Asesora de AlóDigital"
       >
         {abierto ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
         <span>{abierto ? 'Cerrar' : 'Hable con la Asesora'}</span>
       </button>
 
-      {/* Ventana de chat */}
       {abierto && (
-        <div className="fixed bottom-44 right-6 z-50 w-[92vw] max-w-sm h-[65vh] max-h-[480px] bg-[#111111] border-2 border-[#00FF66] shadow-[0_0_35px_rgba(0,255,102,0.25)] rounded-3xl flex flex-col overflow-hidden">
-          {/* Encabezado */}
+        <div className="fixed bottom-24 right-6 z-50 w-[92vw] max-w-sm h-[70vh] max-h-[520px] bg-[#111111] border border-white/10 rounded-3xl shadow-2xl shadow-black/80 flex flex-col overflow-hidden">
           <div className="px-5 py-4 border-b border-white/10 bg-black/40 flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-[#30D158]/20 flex items-center justify-center text-lg">
               🎧
@@ -99,13 +105,9 @@ export const AsesoraChat: React.FC = () => {
             </div>
           </div>
 
-          {/* Mensajes */}
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
             {mensajes.map((m, idx) => (
-              <div
-                key={idx}
-                className={`flex ${m.role === 'visitante' ? 'justify-end' : 'justify-start'}`}
-              >
+              <div key={idx} className={`flex ${m.role === 'visitante' ? 'justify-end' : 'justify-start'}`}>
                 <div
                   className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                     m.role === 'visitante'
@@ -129,7 +131,6 @@ export const AsesoraChat: React.FC = () => {
             <div ref={finalMensajesRef} />
           </div>
 
-          {/* Entrada de texto */}
           <div className="px-3 py-3 border-t border-white/10 bg-black/30 flex items-center gap-2">
             <input
               type="text"
@@ -152,6 +153,8 @@ export const AsesoraChat: React.FC = () => {
           </div>
         </div>
       )}
+
+      {vozAbierta && <AsesoraVoz onCerrar={() => setVozAbierta(false)} />}
     </>
   );
 };
