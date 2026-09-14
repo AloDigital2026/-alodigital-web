@@ -166,6 +166,7 @@ export const handler = async (event) => {
       config: {
         uses: 1,
         expireTime,
+        httpOptions: { apiVersion: 'v1alpha' },
         liveConnectConstraints: {
           model: 'gemini-3.1-flash-live-preview',
           config: {
