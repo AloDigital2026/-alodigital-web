@@ -74,27 +74,30 @@ export const AsesoraChat: React.FC = () => {
 
   return (
     <>
+      {/* Botón de voz — subido de bottom-24 a bottom-40 para no chocar con "Powered by Netlify" */}
       <button
         type="button"
         onClick={() => setVozAbierta(true)}
-        className="fixed bottom-24 right-6 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-[#111111] border border-[#30D158]/40 text-[#30D158] shadow-lg hover:bg-[#1a1a1a] transition-all"
+        className="fixed bottom-40 right-6 z-40 flex items-center justify-center w-12 h-12 rounded-full bg-[#111111] border border-[#30D158]/40 text-[#30D158] shadow-lg hover:bg-[#1a1a1a] transition-all"
         aria-label="Hablar con la Asesora por voz"
       >
         🎙️
       </button>
 
+      {/* Botón flotante de texto — subido de bottom-6 a bottom-20 */}
       <button
         type="button"
         onClick={() => setAbierto((prev) => !prev)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3.5 rounded-full bg-[#30D158] text-black font-bold text-sm shadow-[0_10px_30px_rgba(48,209,88,0.35)] hover:bg-[#34E05F] transition-all"
+        className="fixed bottom-20 right-6 z-50 flex items-center gap-2 px-5 py-3.5 rounded-full bg-[#30D158] text-black font-bold text-sm shadow-[0_10px_30px_rgba(48,209,88,0.35)] hover:bg-[#34E05F] transition-all"
         aria-label="Hablar con la Asesora de AlóDigital"
       >
         {abierto ? <X className="w-5 h-5" /> : <MessageCircle className="w-5 h-5" />}
         <span>{abierto ? 'Cerrar' : 'Hable con la Asesora'}</span>
       </button>
 
+      {/* Ventana de chat — subida de bottom-24 a bottom-40 para quedar justo encima del botón */}
       {abierto && (
-        <div className="fixed bottom-24 right-6 z-50 w-[92vw] max-w-sm h-[70vh] max-h-[520px] bg-[#111111] border border-white/10 rounded-3xl shadow-2xl shadow-black/80 flex flex-col overflow-hidden">
+        <div className="fixed bottom-40 right-6 z-50 w-[92vw] max-w-sm h-[70vh] max-h-[520px] bg-[#111111] border border-white/10 rounded-3xl shadow-2xl shadow-black/80 flex flex-col overflow-hidden">
           <div className="px-5 py-4 border-b border-white/10 bg-black/40 flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-[#30D158]/20 flex items-center justify-center text-lg">
               🎧
