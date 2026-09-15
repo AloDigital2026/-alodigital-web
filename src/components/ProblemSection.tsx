@@ -7,6 +7,7 @@ interface ProblemItem {
   icon: string;
   title: string;
   description: string;
+  gancho?: string;
   antes: string;
   despues: string;
 }
@@ -33,6 +34,7 @@ const PROBLEMS: ProblemItem[] = [
     icon: '📦',
     title: 'Inventario a ciegas',
     description: 'No saber qué se le está acabando hasta que el cliente lo pide y ya no hay.',
+    gancho: '¿Usted sabe, en este momento, qué tiene en su tienda, qué le queda poco y qué necesita volver a comprar, sin tener que ir a revisar físicamente?',
     antes: "El cliente le pide algo, usted dice 'sí, hay', y cuando va a buscarlo ya se acabó. O peor: se acabó hace días y usted no lo sabía.",
     despues: 'Le avisa solo cuando un producto está por acabarse — sin que usted tenga que revisar estante por estante.',
   },
@@ -87,6 +89,11 @@ export const ProblemSection: React.FC = () => {
                 <p className="text-gray-400 text-sm mb-4 leading-relaxed">
                   {problem.description}
                 </p>
+                {problem.gancho && (
+                  <p className="text-[#00FF66] text-sm italic font-medium mb-4 leading-relaxed border-l-2 border-[#00FF66]/40 pl-3">
+                    "{problem.gancho}"
+                  </p>
+                )}
               </div>
 
               {/* Expandable comparison */}
@@ -135,5 +142,3 @@ export const ProblemSection: React.FC = () => {
     </section>
   );
 };
-
-
