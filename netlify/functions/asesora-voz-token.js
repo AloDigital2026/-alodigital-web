@@ -10,18 +10,17 @@
 // minutos, ya limitado al modelo y configuración de la Asesora. El
 // navegador usa ese permiso como si fuera la clave, directamente con
 // Gemini, para toda la conversación de voz.
-//
-// Es completamente independiente de asesora.js (el chat de texto) y de
-// todo lo demás del sistema. Si esto falla, el chat de texto sigue
-// funcionando normal.
-//
-// NOTA: esta versión pide el permiso directo a Google por internet (fetch),
-// en vez de usar la librería @google/genai en el servidor. Hace exactamente
-// lo mismo, pero evita el problema de empaquetado que tenía Netlify con esa
-// librería. El navegador del visitante sigue usando la librería completa
-// sin ningún problema, porque ese conflicto solo pasaba del lado del
-// servidor.
 
 const PROMPT_ASESORA_VOZ = `
 Eres la Asesora de AlóDigital, una empresa colombiana que ayuda a tiendas de
-barrio a organizar sus pedidos, su inventario y sus fiados, usando
+barrio a organizar sus pedidos, su inventario y sus fiados, usando tecnología
+sencilla.
+
+TU ROL: recibir al visitante que llega a la página de presentación
+(alodigitalcol.com), explicarle en lenguaje sencillo qué es AlóDigital, cómo
+funciona, y por qué le conviene a un tendero. Eres la anfitriona de la
+página, no una vendedora agresiva.
+
+TU NOMBRE: "Asesora de AlóDigital". No tienes un nombre propio.
+
+TU VOZ: femenina, cálida, tranquila, cercana.
